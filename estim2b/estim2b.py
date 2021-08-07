@@ -15,13 +15,13 @@ TODO:
 class EstimStatus:
 
     status = {'battery': None, 'A': None, 'B': None, 'C': None, 'D': None,
-              'mode': None, 'power': None, 'joined': None}
+              'mode': None, 'power': None, 'bias' : None, 'joined': None, 'map': None, 'warp': None, 'ramp': None}
                 
-    keys = ['battery', 'A', 'B', 'C', 'D', 'mode', 'power', 'joined']
+    keys = ['battery', 'A', 'B', 'C', 'D', 'mode', 'power', 'bias', 'joined', 'map', 'warp', 'ramp']
 
     def parseReply(self, replyString):
-        print(replyString)
-        print(replyString.decode())
+        #print(replyString)
+        #print(replyString.decode())
         if not ":" in replyString: #check, if reply isn't empty
                 print('Error communicating with E-stim 2B unit!')
                 print('  check connection and power.')
@@ -97,7 +97,7 @@ class EstimStatus:
         if command[0] == 'M':
             self._set_kw(mode=command[1:])
             return True
-        if command[0] == 'H' or command[0] == 'L':
+        if command[0] == 'H' or command[0] == 'L' or command[0] == 'Y':
             self._set_kw(power=command[0])
             return True
         return False # unrecognised command
@@ -111,17 +111,20 @@ class Estim:
     "pulse":0,
     "bounce":1,
     "continuous":2,
-    "asplit":3,
-    "bsplit":4,
-    "wave":5,
-    "waterfall":6,
-    "squeeze":7,
-    "milk":8,
-    "throb":9,
-    "thrust":10,
-    "random":11,
-    "step":12,
-    "training":13
+    "flow":3,
+    "asplit":4,
+    "bsplit":5,
+    "wave":6,
+    "waterfall":7,
+    "squeeze":8,
+    "milk":9,
+    "throb":10,
+    "thrust":11,
+    "cycle":12,
+    "twist":13,
+    "random":14,
+    "step":15,
+    "training":16
     }
     
     ser = serial
@@ -147,6 +150,7 @@ class Estim:
 
             if(self.ser.isOpen()):
                 print("Opened serial device.")
+                print("\r")
         else:
             print('Running in dryrun mode.')
 
@@ -191,7 +195,8 @@ class Estim:
         else:
             command = sendstring+"\n\r"
             self.ser.write(command.encode())
-            print('(send complete).')
+            if self.verbose:
+                print('(send complete).')
         time.sleep(self.delay)
             
 
@@ -201,6 +206,7 @@ class Estim:
     # level: the value between 0-99 to set.
     def setOutput(self, channel, level):
         print('setOutput: {} ({}): {} ({})'.format(channel, level, type(channel), type(level)))
+        print("\r")
         if channel in ['A', 'B']:
             if level < 0 or level > 100:
                 print("Err: Invalid output level selected! A (or B) must be in range 0 to 100.")
@@ -217,6 +223,9 @@ class Estim:
     
     def setHigh(self):
         self.send("H")
+    
+    def setDynamic(self):
+        self.send("Y")
     
     def linkChannels(self):
         self.send("J1")
